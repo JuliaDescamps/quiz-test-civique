@@ -32,9 +32,8 @@ function(input, output, session) {
     readme_open(FALSE)
   })
   
-  # =======================
-  # Tirage paramétrable
-  # =======================
+
+  # Tirage ------
   make_session_quiz <- function(n_per_theme = 2) {
     ids_principe_repu <- sample_quiz_ids(questions_principes_repu, groups_principes_repu, n = n_per_theme)
     qs_principe_repu <- subset_questions_by_ids(questions_principes_repu, ids_principe_repu)
@@ -55,7 +54,7 @@ function(input, output, session) {
     lapply(qs_all, shuffle_choices)
   }
   
-  # --- État réactif global (inclure les questions ici) ---
+  # État réactif global -----
   rv <- reactiveValues(
     questions = NULL,
     i = 1,
@@ -67,7 +66,7 @@ function(input, output, session) {
     finished = FALSE
   )
   
-  # --- (Re)configurer un quiz complet selon le mode courant ---
+  # Configurer un quiz ----
   setup_quiz_from_mode <- function(n_per_theme) {
     rv$questions <- make_session_quiz(n_per_theme = n_per_theme)
     rv$n <- length(rv$questions)
@@ -78,7 +77,7 @@ function(input, output, session) {
     rv$validated <- FALSE
     rv$finished <- FALSE
     
-    # (Ré)initialiser les outputs
+    # (Ré)initialiser ------
     output$question_ui <- renderUI({
       req(!rv$finished)
       q <- rv$questions[[rv$i]]
@@ -92,26 +91,25 @@ function(input, output, session) {
     output$final_ui <- renderUI(NULL)
   }
   
-  # --- Initialisation (hors réactif avec isolate) ---
   observeEvent(TRUE, {
     npt_init <- if (identical(isolate(input$mode), "rapid")) 2 else 8
     setup_quiz_from_mode(n_per_theme = npt_init)
   }, once = TRUE)
   
-  # --- Changement de mode : nouveau tirage ---
+  # Nouveau tirage -----
   observeEvent(input$mode, {
     npt <- if (identical(input$mode, "rapid")) 2 else 8
     setup_quiz_from_mode(n_per_theme = npt)
   })
   
-  # --- Score partiel (inchangé) ---
+  # Score partiel ----
   output$partial_text <- renderText({
     if (rv$submit_count == 0) "—" else
       sprintf("Bonnes réponses : %d | Score partiel : %.0f%%",
               rv$correct_count, 100 * rv$correct_count / rv$submit_count)
   })
   
-  # --- Valider (inchangé sauf source des questions) ---
+  # Valider -----
   observeEvent(input$submit, {
     req(!rv$finished)
     if (isTRUE(rv$validated)) {
@@ -141,7 +139,7 @@ function(input, output, session) {
     })
   })
   
-  # --- Suivant (logique simplifiée et sûre) ---
+  # Suivant -----
   observeEvent(input$nextbutton, {
     req(!rv$finished)
     if (!isTRUE(rv$validated)) {
@@ -173,7 +171,7 @@ function(input, output, session) {
     output$feedback_ui <- renderUI({ NULL })
   })
   
-  # --- Recommencer : nouveau tirage + reset ---
+  # Recommencer  ----
   observeEvent(input$restart, {
     npt <- if (identical(input$mode, "rapid")) 2 else 8
     setup_quiz_from_mode(n_per_theme = npt)
